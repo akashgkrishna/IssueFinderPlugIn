@@ -1,11 +1,11 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>com.example.HackathonDemo</id>
+    <id>com.example.IssueTagTracker</id>
 
     <!-- Public plugin name should be written in Title Case.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-    <name>HackathonDemo</name>
+    <name>IssueTagTracker</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="support@abc.com" url="https://www.yourcompany.com">
@@ -31,7 +31,7 @@
     <actions>
         <action id="SampleActionClass"
                 class="com.example.actions.SampleActionClass"
-                text="Hacathon"
+                text="IssueTagTracker"
                 description="Description of the sample action">
             <add-to-group group-id="ToolsMenu" anchor="first"> </add-to-group>
             <add-to-group group-id="EditorPopupMenu1" anchor="first"> </add-to-group>
