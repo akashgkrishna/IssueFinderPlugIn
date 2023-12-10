@@ -16,15 +16,54 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 
 public class SampleActionClass extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        String filePath = "/Users/testvagrant/Desktop/Better/LearnFramework/src/test/java/web/test/SampleTest.java";
-        findAndSendSlackNotification(filePath);
+        String basePath = e.getProject().getBasePath();
+        if (basePath != null) {
+            List<String> foundIDs = new ArrayList<>();
+
+            try {
+                Files.walk(Paths.get(basePath))
+                        .filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".java"))
+                        .forEach(path -> foundIDs.addAll(findJiraIDsInFile(path.toString())));
+            } catch (IOException ex) {
+                ex.printStackTrace(); // Replace with proper logging
+                return;
+            }
+
+            if (!foundIDs.isEmpty()) {
+                StringBuilder message = new StringBuilder();
+                for (String id : foundIDs) {
+                    message.append("Found Jira ID in comment: ").append(id).append("\n");
+                }
+
+                int choice = Messages.showOkCancelDialog(message + "\nClick OK to send a Slack notification.",
+                        "Jira IDs", "OK", "Cancel", Messages.getInformationIcon());
+
+                if (choice == Messages.OK) {
+                    try {
+                        sendSlackNotification(foundIDs);
+                    } catch (IOException ex) {
+                        ex.printStackTrace(); // Replace with proper logging
+                        Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
+                    }
+                }
+            } else {
+                Messages.showInfoMessage("No Jira IDs found in Java files.", "Jira IDs");
+            }
+        }
     }
 
-    private void findAndSendSlackNotification(String filePath) {
+    private List<String> findJiraIDsInFile(String filePath) {
         List<String> foundIDs = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -46,36 +85,23 @@ public class SampleActionClass extends AnAction {
             }
         } catch (IOException ex) {
             ex.printStackTrace(); // Replace with proper logging
-            return;
         }
 
-        if (!foundIDs.isEmpty()) {
-            StringBuilder message = new StringBuilder();
-            for (String id : foundIDs) {
-                message.append("Found Jira ID in comment: ").append(id).append("\n");
-            }
-
-            int choice = Messages.showOkCancelDialog(message + "\nClick OK to send a Slack notification.",
-                    "Jira IDs", "OK", "Cancel", Messages.getInformationIcon());
-
-            if (choice == Messages.OK) {
-                try {
-                    sendSlackNotification(foundIDs);
-                } catch (IOException ex) {
-                    ex.printStackTrace(); // Replace with proper logging
-                    Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
-                }
-            }
-        } else {
-            Messages.showInfoMessage("No Jira IDs found.", "Jira IDs");
-        }
+        return foundIDs;
     }
 
     private void sendSlackNotification(List<String> jiraIDs) throws IOException {
-        String slackToken = "xoxb-10189127591-6318842254149-qJT53zuncqjgovxiFCTu9Jr7";
+        String slackToken = Messages.showInputDialog("Enter your Slack API token:", "Slack Token", Messages.getQuestionIcon());
+        if (slackToken == null || slackToken.isEmpty()) {
+            Messages.showMessageDialog("Slack token cannot be empty.", "Error", Messages.getErrorIcon());
+            return;
+        }
+
+        String channelName = Messages.showInputDialog("Enter the Slack channel name:", "Slack Channel", Messages.getQuestionIcon());
+        if (channelName == null || channelName.isEmpty()) {
+            Messages.showMessageDialog("Channel name cannot be empty.", "Error", Messages.getErrorIcon());
+            return;
+        }
 
         Slack slack = Slack.getInstance();
         MethodsClient methods = slack.methods(slackToken);
@@ -83,7 +109,7 @@ public class SampleActionClass extends AnAction {
         String jiraIDMessage = String.join(", ", jiraIDs);
 
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                .channel("jira_issues")
+                .channel(channelName)
                 .text("Found Jira IDs: " + jiraIDMessage)
                 .build();
 
@@ -100,4 +126,5 @@ public class SampleActionClass extends AnAction {
             throw new IOException("Failed to send Slack notification", ex);
         }
     }
+
 }
