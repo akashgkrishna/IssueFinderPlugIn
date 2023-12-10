@@ -19,6 +19,13 @@ dependencies {
     implementation("com.slack.api:slack-api-client:1.36.1") {
         exclude(mapOf("group" to "org.slf4j", "module" to "slf4j-api"))
     }
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
+    implementation("org.apache.logging.log4j:log4j-core:2.22.0")
+
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-api
+    implementation("org.apache.logging.log4j:log4j-api:2.22.0")
+
+
 
 }
 configurations {
