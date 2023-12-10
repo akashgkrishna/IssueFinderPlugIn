@@ -9,7 +9,25 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://maven.pkg.jetbrains.space/public/p/slack-api-client/maven") }
 }
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.slack.api/slack-api-client
+    implementation("com.slack.api:slack-api-client:1.36.1")
+
+    implementation("com.slack.api:slack-api-client:1.36.1") {
+        exclude(mapOf("group" to "org.slf4j", "module" to "slf4j-api"))
+    }
+
+}
+configurations {
+    all {
+        exclude(group = "org.slf4j", module = "slf4j-api")
+    }
+}
+
+
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
