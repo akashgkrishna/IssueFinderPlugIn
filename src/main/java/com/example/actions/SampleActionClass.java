@@ -94,38 +94,33 @@ public class SampleActionClass extends AnAction {
     }
 
     private void sendSlackNotification(List<String> jiraIDs) throws IOException {
-        String slackToken = Messages.showInputDialog("Enter your Slack API token:", "Slack Token", Messages.getQuestionIcon());
-        if (slackToken == null || slackToken.isEmpty()) {
-            Messages.showMessageDialog("Slack token cannot be empty.", "Error", Messages.getErrorIcon());
+
+        InputDialog inputDialog = new InputDialog(null);
+
+        String[] input = inputDialog.showDialog();
+
+        if (input == null || input.length != 3) {
+            Messages.showMessageDialog("Invalid input provided.", "Error", Messages.getErrorIcon());
             return;
         }
 
-        String channelName = Messages.showInputDialog("Enter the Slack channel name:", "Slack Channel", Messages.getQuestionIcon());
-        if (channelName == null || channelName.isEmpty()) {
-            Messages.showMessageDialog("Channel name cannot be empty.", "Error", Messages.getErrorIcon());
-            return;
-        }
+        String jiraBaseUrl = input[0];
+        String slackToken = input[1];
+        String channelName = input[2];
 
         Slack slack = Slack.getInstance();
         MethodsClient methods = slack.methods(slackToken);
 
-
-//        String jiraIDMessage = String.join(", ", jiraIDs);
-//
-//        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-//                .channel(channelName)
-//                .text("Found Jira IDs: " + jiraIDMessage)
-//                .build();
-        List<String> jiraLinks = jiraIDs.stream()
-                .map(id -> "https://akashgkrishna.atlassian.net/browse/" + id)
-                .toList();
-
-        String jiraIDMessage = String.join(", ", jiraLinks);
+        StringBuilder jiraIDMessage = new StringBuilder();
+        for (String id : jiraIDs) {
+            jiraIDMessage.append("<").append(jiraBaseUrl).append(id).append("|").append(id).append(">").append("\n");
+        }
 
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
                 .channel(channelName)
-                .text("Found Jira IDs: " + jiraIDMessage)
+                .text("Found Jira IDs:\n" + jiraIDMessage)
                 .build();
+
         try {
             ChatPostMessageResponse response = methods.chatPostMessage(request);
             if (!response.isOk()) {
