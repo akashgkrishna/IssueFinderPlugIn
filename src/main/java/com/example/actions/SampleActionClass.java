@@ -7,20 +7,23 @@ import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 
 public class SampleActionClass extends AnAction {
+    private static final Logger logger = LogManager.getLogger(SampleActionClass.class);
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         String basePath = e.getProject().getBasePath();
@@ -33,7 +36,7 @@ public class SampleActionClass extends AnAction {
                         .filter(path -> path.toString().endsWith(".java"))
                         .forEach(path -> foundIDs.addAll(findJiraIDsInFile(path.toString())));
             } catch (IOException ex) {
-                ex.printStackTrace(); // Replace with proper logging
+                logger.error("An error occurred", ex);
                 return;
             }
 
@@ -50,10 +53,10 @@ public class SampleActionClass extends AnAction {
                     try {
                         sendSlackNotification(foundIDs);
                     } catch (IOException ex) {
-                        ex.printStackTrace(); // Replace with proper logging
+                        logger.error("An error occurred", ex);
                         Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        logger.error("An error occurred ", ex);
                         Messages.showMessageDialog("Failed to send Slack notification", "Error", Messages.getErrorIcon());
                     }
                 }
@@ -84,7 +87,7 @@ public class SampleActionClass extends AnAction {
                 }
             }
         } catch (IOException ex) {
-            ex.printStackTrace(); // Replace with proper logging
+            logger.error("An error occurred", ex);
         }
 
         return foundIDs;
@@ -106,13 +109,23 @@ public class SampleActionClass extends AnAction {
         Slack slack = Slack.getInstance();
         MethodsClient methods = slack.methods(slackToken);
 
-        String jiraIDMessage = String.join(", ", jiraIDs);
+
+//        String jiraIDMessage = String.join(", ", jiraIDs);
+//
+//        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+//                .channel(channelName)
+//                .text("Found Jira IDs: " + jiraIDMessage)
+//                .build();
+        List<String> jiraLinks = jiraIDs.stream()
+                .map(id -> "https://akashgkrishna.atlassian.net/browse/" + id)
+                .toList();
+
+        String jiraIDMessage = String.join(", ", jiraLinks);
 
         ChatPostMessageRequest request = ChatPostMessageRequest.builder()
                 .channel(channelName)
                 .text("Found Jira IDs: " + jiraIDMessage)
                 .build();
-
         try {
             ChatPostMessageResponse response = methods.chatPostMessage(request);
             if (!response.isOk()) {
