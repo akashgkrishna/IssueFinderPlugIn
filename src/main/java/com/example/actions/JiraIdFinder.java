@@ -22,8 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class SampleActionClass extends AnAction {
-    private static final Logger logger = LogManager.getLogger(SampleActionClass.class);
+public class JiraIdFinder extends AnAction {
+    private static final Logger logger = LogManager.getLogger(JiraIdFinder.class);
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         String basePath = e.getProject().getBasePath();
